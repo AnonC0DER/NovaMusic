@@ -18,10 +18,18 @@ def Start_handler(message):
 Hello, I'm Nova.
 You can search and get your favorite music using me.
 Send your music for me, then you can search it everywhere in your chats and get it :).
-Use this buttons (b) or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
-    reply_markup=types.InlineKeyboardMarkup([
-        [types.InlineKeyboardButton('Search', switch_inline_query_current_chat='')]
-    ]))
+Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
+    reply_markup=types.InlineKeyboardMarkup(
+            [ 
+                [
+                    types.InlineKeyboardButton(
+                        '🎵 Search music 🎵', switch_inline_query_current_chat='')
+                ],[
+                    types.InlineKeyboardButton(
+                        'Github', url='https://github.com/AnonC0DER/NovaMusic')
+                ]
+            ]
+    ))
 
 
 # Ping Pong
@@ -30,7 +38,7 @@ def PingPong_handler(message):
     '''PingPong handler'''
     
     bot.reply_to(message, 'Pong 🏓', reply_markup=types.InlineKeyboardMarkup([
-        [types.InlineKeyboardButton('🎵 Search a music 🎵', switch_inline_query_current_chat='')]
+        [types.InlineKeyboardButton('🎵 Search music 🎵', switch_inline_query_current_chat='')]
     ]))
 
 
@@ -116,12 +124,12 @@ def Search_music(chosen_inline_result):
         description='Sorry, this music is not in my database.', 
         thumb_url='http://ideyab.site/wp-content/uploads/2020/06/error-404.png',
         reply_markup=types.InlineKeyboardMarkup([
-        [types.InlineKeyboardButton('🎵 Search a music 🎵', switch_inline_query_current_chat='')]
+        [types.InlineKeyboardButton('🎵 Search music 🎵', switch_inline_query_current_chat='')]
         ]))
 
         bot.answer_inline_query(chosen_inline_result.id, [not_found])
     
     
 
-
+print('[+] Robot started successfully !')
 bot.polling(none_stop=True)
