@@ -80,6 +80,35 @@ def Add_Music(message):
 
 
 #################################### Inline
+# Return music when user is not searching
+@bot.inline_handler(lambda query: len(query.query) == 0 or query.query == None)
+def ShowHelp_handler(chosen_inline_result):
+    '''Return 16 results from music database'''
+
+    music_id = 0
+    results = []
+    for music in Rr.hgetall('Music'):
+        # Return 16 results each time
+        if len(results) <= 15:
+            print(music)
+            music_id += 1
+            # Append music to results list
+            results.append(types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music,
+                    reply_markup=types.InlineKeyboardMarkup(
+                [ 
+                    [
+                        types.InlineKeyboardButton(
+                            '🎸 More Music  🎸', url=f'https://t.me/{BOT_USERNAME}')
+                    ],[
+                        types.InlineKeyboardButton(
+                            '↪️ Share this music ↩️', switch_inline_query=music)
+                    ]
+                ]
+            ))) 
+
+    bot.answer_inline_query(chosen_inline_result.id, results)
+
+
 # Inline music search
 @bot.inline_handler(lambda query: query.query)
 def Search_music(chosen_inline_result):
@@ -94,24 +123,29 @@ def Search_music(chosen_inline_result):
 
     # Search in database
     for music in Rr.hgetall('Music'):
-        # If query in music title
-        if query in music:
-            music_id += 1
-            # Append it to results list
-            results.append(
-                types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music,
-                reply_markup=types.InlineKeyboardMarkup(
-            [ 
-                [
-                    types.InlineKeyboardButton(
-                        '🎸 More Music  🎸', url=f'https://t.me/{BOT_USERNAME}')
-                ],[
-                    types.InlineKeyboardButton(
-                        '↪️ Share this music ↩️', switch_inline_query=query)
+        # 50 inline results are acceptable each time
+        if len(results) <= 49:
+            # If query in music title
+            if query in music:
+                music_id += 1
+                # Append it to results list
+                results.append(
+                    types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music,
+                    reply_markup=types.InlineKeyboardMarkup(
+                [ 
+                    [
+                        types.InlineKeyboardButton(
+                            '🎸 More Music  🎸', url=f'https://t.me/{BOT_USERNAME}')
+                    ],[
+                        types.InlineKeyboardButton(
+                            '↪️ Share this music ↩️', switch_inline_query=music)
+                    ]
                 ]
-            ]
-        ))) 
+            ))) 
 
+        else:
+            break
+        
     if len(results) != 0:
         # Return music 
         bot.answer_inline_query(chosen_inline_result.id, results)
@@ -130,6 +164,7 @@ def Search_music(chosen_inline_result):
         bot.answer_inline_query(chosen_inline_result.id, [not_found])
     
     
+
 
 print('[+] Robot started successfully !')
 bot.polling(none_stop=True)
