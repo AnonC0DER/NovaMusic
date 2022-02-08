@@ -1,4 +1,4 @@
-# NovaMusic
+# [NovaMusic](https://t.me/NovaMusicRobot)
 
 ## Summary
 NovaMusic is a music sharing robot. Users can get music and music lyrics using inline queries. <br>
