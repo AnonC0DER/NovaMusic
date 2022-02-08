@@ -1,49 +1,82 @@
 from telebot import types, TeleBot
 from redis import Redis 
-from config import BOT_TOKEN, BOT_USERNAME, REDIES_PASSWORD, REDIES_PORT, REDIES_SERVER, SUDO
-from utils import Get_users_count, Write_userID, is_user
+from config import BOT_TOKEN, BOT_USERNAME, REDIES_PASSWORD, REDIES_PORT, REDIES_SERVER, SUDO, GENIUS_TOKEN
+from utils import Get_users_count, Write_userID, is_user, Get_total_users, Get_lyrics
+
 
 # Set Up
-# bot = telebot.TeleBot(token=BOT_TOKEN)
 bot = TeleBot(token=BOT_TOKEN)
 Rr = Redis(host=REDIES_SERVER, port=REDIES_PORT, password=REDIES_PASSWORD, decode_responses=True)
 
 
 # Start message
-@bot.message_handler(commands=['start', f'start@{BOT_USERNAME}'])
+@bot.message_handler(commands=['start'])
 def Start_handler(message):
-    '''Start message handler'''
-    
+    '''Start message handler'''    
     if message.chat.type == 'private':
-        if is_user(message.from_user.id) == False:
-            Write_userID(message.from_user.id)
+        # Write user id in txt file if it doesn't exists
+        if is_user(message.from_user.id, 'members') == False:
+            Write_userID(message.from_user.id, 'members')
         
         else:
             pass
 
-        bot.reply_to(message, f'''
-Hello, I'm Nova.
-You can search and get your favorite music using me.
-Send your music for me, then you can search it everywhere in your chats and get it :).
-Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
-        reply_markup=types.InlineKeyboardMarkup(
-                [ 
-                    [
-                        types.InlineKeyboardButton(
-                            '🎵 Search music 🎵', switch_inline_query_current_chat='')
-                    ],[
-                        types.InlineKeyboardButton(
-                            'Github', url='https://github.com/AnonC0DER/NovaMusic')
+        command = message.text.replace('/start ', '')
+        if command == '/start':
+            bot.reply_to(message, f'''
+    Hello, I'm Nova.
+    You can search and get your favorite music using me.
+    Send your music for me, then you can search it everywhere in your chats and get it :).
+    Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
+            reply_markup=types.InlineKeyboardMarkup(
+                    [ 
+                        [
+                            types.InlineKeyboardButton(
+                                '🎵 Search music 🎵', switch_inline_query_current_chat='')
+                        ],[
+                            types.InlineKeyboardButton(
+                                'Github', url='https://github.com/AnonC0DER/NovaMusic')
+                        ]
                     ]
-                ]
-        ))
+            ))
 
+        else:
+            command = command.replace('_', ' ')
+            lyrics = Get_lyrics(command)
+            if lyrics == 'Not Found':
+                bot.reply_to(message, 'Sorry I couldnot find lyrics.', 
+                reply_markup=types.InlineKeyboardMarkup(
+                    [ 
+                        [
+                            types.InlineKeyboardButton(
+                                '🎵 Search again 🎵', switch_inline_query_current_chat='')
+                        ]
+                    ]
+            ))
+
+            else:
+                bot.reply_to(message, f'Lyrics found by [NovaMusic](https://t.me/{BOT_USERNAME})\n\n{lyrics}',
+                reply_markup=types.InlineKeyboardMarkup(
+                    [ 
+                        [
+                            types.InlineKeyboardButton(
+                                '🎵 Search music 🎵', switch_inline_query_current_chat='')
+                        ]
+                    ]
+                ), parse_mode='markdown')
 
 # Ping Pong
 @bot.message_handler(commands=['ping', f'ping@{BOT_USERNAME}'])
 def PingPong_handler(message):
     '''PingPong handler'''
     
+    # Write user id in txt file if it doesn't exists
+    if is_user(message.from_user.id, 'members') == False:
+            Write_userID(message.from_user.id, 'members')
+        
+    else:
+        pass
+
     bot.send_message(message.chat.id, 'Pong 🏓', reply_markup=types.InlineKeyboardMarkup([
         [types.InlineKeyboardButton('🎵 Search music 🎵', switch_inline_query_current_chat='')]
     ]), reply_to_message_id=message.message_id)
@@ -55,6 +88,12 @@ def Add_Music(message):
     '''Add music to database'''
 
     if message.chat.type == 'private':
+        # Write user id in txt file if it doesn't exists
+        if is_user(message.from_user.id, 'members') == False:
+            Write_userID(message.from_user.id, 'members')
+        
+        else:
+            pass
 
         # There is msuic title and music performer
         if message.audio.title and message.audio.performer:
@@ -175,11 +214,41 @@ def Delete_music(chosen_inline_result):
             result = types.InlineQueryResultArticle('1', 'Something went wrong !', types.InputTextMessageContent(f'I couldnot delete {music_name}.\nCheck the name, make sure you type it correctly.'))
 
         bot.answer_inline_query(chosen_inline_result.id, [result])
+
+
+# Get statistics
+@bot.inline_handler(lambda query: query.query == '!stat')
+def Get_stat_inline(chosen_inline_result):
+    '''Get robot statistics using inline queries'''
+
+    # Sudo and admins can delete music
+    if str(chosen_inline_result.from_user.id) == SUDO or str(chosen_inline_result.from_user.id) in Rr.lrange('Admin', 0, -1):
+        result = types.InlineQueryResultArticle('1', 'Done', types.InputTextMessageContent(f'''
+📊 Statistics 📊
+
+🎧 All music : {len(Rr.hgetall('Music'))}
+👥 All users : {Get_total_users()}
+👥 Users : {Get_users_count('members')}
+👥 Inline users : {Get_users_count('inline_members')}
+👤 Admins : {Rr.llen('Admin')}
+🔆 Sudo : {len([SUDO])}
+
+[Github](https://github.com/AnonC0DER/NovaMusic)''', parse_mode='markdown'))
+
+        bot.answer_inline_query(chosen_inline_result.id, [result], cache_time=1)
 #################################### Inline - users
 # Return music when user is not searching
 @bot.inline_handler(lambda query: len(query.query) == 0 or query.query == None)
 def RetrunMusic_handler(chosen_inline_result):
     '''Return 16 results from music database'''
+
+    # Write user id in txt file if it doesn't exists
+    if is_user(chosen_inline_result.from_user.id, 'inline_members') == False:
+        if is_user(chosen_inline_result.from_user.id, 'members') == False:
+            Write_userID(chosen_inline_result.from_user.id, 'inline_members')
+        
+    else:
+        pass
 
     music_id = 0
     results = []
@@ -187,19 +256,21 @@ def RetrunMusic_handler(chosen_inline_result):
         # Return 16 results each time
         if len(results) <= 15:
             music_id += 1
+            # Replace all spaces with _ and remove all ()
+            lyrics = music.replace('(', '')
+            lyrics = music.replace(')', '')
+            lyrics = music.replace(' ', '_')
             # Append music to results list
-            results.append(types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music,
-                    reply_markup=types.InlineKeyboardMarkup(
+            results.append(types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music, 
+            caption=f'[NovaMusic](https://t.me/{BOT_USERNAME})', parse_mode='markdown',
+            reply_markup=types.InlineKeyboardMarkup(
                 [ 
                     [
                         types.InlineKeyboardButton(
-                            '🎸 More Music  🎸', url=f'https://t.me/{BOT_USERNAME}')
-                    ],[
-                        types.InlineKeyboardButton(
-                            '↪️ Share this music ↩️', switch_inline_query=music)
+                            '🎸 Lyrics  🎸', url=f'https://t.me/{BOT_USERNAME}?start={lyrics}')
                     ]
                 ]
-            ))) 
+                ))) 
 
     bot.answer_inline_query(chosen_inline_result.id, results)
 
@@ -209,6 +280,14 @@ def RetrunMusic_handler(chosen_inline_result):
 def Search_music(chosen_inline_result):
     '''Search music and return it for user'''
     
+    # Write user id in txt file if it doesn't exists
+    if is_user(chosen_inline_result.from_user.id, 'inline_members') == False:
+        if is_user(chosen_inline_result.from_user.id, 'members') == False:
+            Write_userID(chosen_inline_result.from_user.id, 'inline_members')
+        
+    else:
+        pass
+
     # Get query
     query = chosen_inline_result.query.lower()
     
@@ -222,22 +301,24 @@ def Search_music(chosen_inline_result):
         if len(results) <= 49:
             # If query in music title
             if query in music:
+                # Replace all spaces with _ and remove all ()
+                lyrics = music.replace('(', '')
+                lyrics = music.replace(')', '')
+                lyrics = music.replace(' ', '_')
                 music_id += 1
                 # Append it to results list
                 results.append(
                     types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music,
+                    caption=f'[NovaMusic](https://t.me/{BOT_USERNAME})', parse_mode='markdown',
                     reply_markup=types.InlineKeyboardMarkup(
                 [ 
                     [
                         types.InlineKeyboardButton(
-                            '🎸 More Music  🎸', url=f'https://t.me/{BOT_USERNAME}')
-                    ],[
-                        types.InlineKeyboardButton(
-                            '↪️ Share this music ↩️', switch_inline_query=music)
+                            '🎸 Lyrics  🎸', url=f'https://t.me/{BOT_USERNAME}?start={lyrics}')
                     ]
                 ]
-            ))) 
-
+                )))
+                    
         else:
             break
         
@@ -269,13 +350,13 @@ def Stat_handler(message):
 📊 Statistics 📊
 
 🎧 All music : {len(Rr.hgetall('Music'))}
-👥 All users : {Get_users_count()}
-👥 Inline users : {None}
+👥 All users : {Get_total_users()}
+👥 Users : {Get_users_count('members')}
+👥 Inline users : {Get_users_count('inline_members')}
 👤 Admins : {Rr.llen('Admin')}
 🔆 Sudo : {len([SUDO])}
 
 [Github](https://github.com/AnonC0DER/NovaMusic)''', parse_mode='markdown')
-
 
 
 
