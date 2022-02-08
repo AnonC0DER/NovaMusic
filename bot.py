@@ -24,10 +24,10 @@ def Start_handler(message):
         command = message.text.replace('/start ', '')
         if command == '/start':
             bot.reply_to(message, f'''
-    Hello, I'm Nova.
-    You can search and get your favorite music using me.
-    Send your music for me, then you can search it everywhere in your chats and get it :).
-    Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
+Hello, I'm Nova.
+You can search and get your favorite music using me.
+Send your music for me, then you can search it everywhere in your chats and get it :).
+Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music name to get it.''', 
             reply_markup=types.InlineKeyboardMarkup(
                     [ 
                         [
