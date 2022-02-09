@@ -9,7 +9,7 @@ You can create a free Redis online database, use this [link](https://app.redisla
 
 
 ## Plans
-- [ ] Create lyricsfreak.com API
+- [x] Create lyricsfreak.com API Done -> [LyricsFk](https://github.com/AnonC0DER/lyricsfreak-api)
 
 
 # Setting up things
