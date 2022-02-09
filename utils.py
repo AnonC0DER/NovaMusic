@@ -1,8 +1,6 @@
-from urllib.parse import urlencode, urlunparse
-from urllib.request import urlopen, Request
-from bs4 import BeautifulSoup
 import random
-
+import json
+from requests import get
 
 # Get Random useragent
 def RandomUSERagent():
@@ -56,7 +54,6 @@ def Get_total_users():
     return total
 
 
-
 def Write_userID(userid, txt):
     '''Write user ID to txt file'''
     
@@ -98,61 +95,10 @@ def is_user(userid, txt):
 
 
 def Get_lyrics(query):
-    '''Get lyrics using lyrics freak'''
+    '''Get lyrics using lyrics freak unofficial API'''
 
-    lyricsFreak = 'https://www.lyricsfreak.com'
-    # Prepare url
-    url = urlunparse(('https', 'www.lyricsfreak.com', '/search.php', '', urlencode({'q': query}), ''))
-    custom_user_agent = RandomUSERagent()
-    # make request
-    req = Request(url, headers={'User-Agent': custom_user_agent})
-    page = urlopen(req)
-    # Read html page
-    soup = BeautifulSoup(page.read(), 'lxml')
-
-    # Find links
-    links = soup.findAll('a', {'class' : 'song'})
-    # Find artists
-    artists = soup.findAll('div', {'class' : 'lf-list__cell lf-list__title--secondary'})
-
-    MusicLinks = []
-    artistsStr = []
-
-    for music in links:
-        MusicLinks.append(music['href'])
-
-    for artist in artists:
-        artistsStr.append(artist.text.replace('·     ', ''))
-	
+    url = f'https://lyricsfk-api.herokuapp.com/search-lyrics/{query}?format=json'
+    req = get(url).text
+    lyrics = json.loads(req)
     
-    try:
-        # Prpare url
-        WebUrls = [lyricsFreak + MusicLinks[0]]
-    
-    except:
-        pass
-    
-    # Get new user agent
-    custom_user_agent = RandomUSERagent()
-    LyricsText = []
-
-    try:
-        for url in WebUrls:
-            # make request
-            req = Request(url, headers={'User-Agent': custom_user_agent})
-            page = urlopen(req)
-            soup = BeautifulSoup(page.read(), 'lxml')
-            lyrictxt = soup.findAll('div', {'class' : 'lyrictxt js-lyrics js-share-text-content'})
-
-            TextStr = []
-
-            # Append each line to the list
-            for line in lyrictxt:
-                TextStr.append(line.text)
-
-            LyricsText.append(' '.join(TextStr))
-        
-        return LyricsText[0]
-    
-    except UnboundLocalError:
-        return 'Not Found'
+    return lyrics
