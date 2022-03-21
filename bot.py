@@ -341,10 +341,5 @@ def Stat_handler(message):
 [Github](https://github.com/AnonC0DER/NovaMusic)''', parse_mode='markdown')
 
 
-
-
-
-
-
 print('[+] Robot started successfully !')
 bot.polling(none_stop=True)
