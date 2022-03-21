@@ -1,3 +1,4 @@
+from pyexpat.errors import messages
 from telebot import types, TeleBot
 from redis import Redis 
 from config import BOT_TOKEN, BOT_USERNAME, REDIES_PASSWORD, REDIES_PORT, REDIES_SERVER, SUDO, GENIUS_TOKEN
@@ -12,7 +13,7 @@ Rr = Redis(host=REDIES_SERVER, port=REDIES_PORT, password=REDIES_PASSWORD, decod
 # Start message
 @bot.message_handler(commands=['start'])
 def Start_handler(message):
-    '''Start message handler'''    
+    '''Start message handler'''
     if message.chat.type == 'private':
         # Write user id in txt file if it doesn't exists
         if is_user(message.from_user.id, 'members') == False:
@@ -20,9 +21,9 @@ def Start_handler(message):
         
         else:
             pass
-
+        
         command = message.text.replace('/start ', '')
-        if command == '/start':
+        if command == '/start' or 'online' in command:
             bot.reply_to(message, f'''
 Hello, I'm Nova.
 You can search and get your favorite music using me.
@@ -237,10 +238,10 @@ def Get_stat_inline(chosen_inline_result):
 
         bot.answer_inline_query(chosen_inline_result.id, [result], cache_time=1)
 #################################### Inline - users
-# Return music when user is not searching
+# Show robot is Up
 @bot.inline_handler(lambda query: len(query.query) == 0 or query.query == None)
-def RetrunMusic_handler(chosen_inline_result):
-    '''Return 16 results from music database'''
+def RobotUp_handler(chosen_inline_result):
+    '''Show robot is Up'''
 
     # Write user id in txt file if it doesn't exists
     if is_user(chosen_inline_result.from_user.id, 'inline_members') == False:
@@ -250,29 +251,10 @@ def RetrunMusic_handler(chosen_inline_result):
     else:
         pass
 
-    music_id = 0
-    results = []
-    for music in Rr.hgetall('Music'):
-        # Return 16 results each time
-        if len(results) <= 15:
-            music_id += 1
-            # Replace all spaces with _ and remove all ()
-            lyrics = music.replace('(', '')
-            lyrics = music.replace(')', '')
-            lyrics = music.replace(' ', '_')
-            # Append music to results list
-            results.append(types.InlineQueryResultAudio(str(music_id), Rr.hgetall('Music').get(music), music, 
-            caption=f'[NovaMusic](https://t.me/{BOT_USERNAME})', parse_mode='markdown',
-            reply_markup=types.InlineKeyboardMarkup(
-                [ 
-                    [
-                        types.InlineKeyboardButton(
-                            '🎸 Lyrics  🎸', url=f'https://t.me/{BOT_USERNAME}?start={lyrics}')
-                    ]
-                ]
-                ))) 
-
-    bot.answer_inline_query(chosen_inline_result.id, results)
+    result = None
+  
+    bot.answer_inline_query(chosen_inline_result.id, results=[result], 
+    switch_pm_text="I'm online !", switch_pm_parameter='online')
 
 
 # Inline music search
