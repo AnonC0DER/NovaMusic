@@ -40,8 +40,8 @@ Use this buttons ⬇️ or type "@{BOT_USERNAME} music" and enter your music nam
             ))
 
         else:
-            music_name = Get_music_name(command)
-            lyrics = Get_lyrics(music_name[0])
+            music_name, performer = Get_music_name(command)
+            lyrics = Get_lyrics(music_name[0] + ' ' + performer[0])
             if lyrics == 'Not Found':
                 bot.reply_to(message, 'Sorry I couldnot find lyrics.', 
                 reply_markup=types.InlineKeyboardMarkup(

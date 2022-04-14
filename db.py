@@ -77,10 +77,16 @@ def Count_songs():
 def Get_music_name(file_unique_id):
     '''Get music name using file_unique_id'''
     query = f'''SELECT title FROM novamusic_bot WHERE file_unique_id='{file_unique_id}';'''
+    query2 = f'''SELECT performer FROM novamusic_bot WHERE file_unique_id='{file_unique_id}';'''
 
     cur = conn.cursor()
     cur.execute(query)
-    Get_result = cur.fetchone()
+    title = cur.fetchone()
     cur.close()
-   
-    return Get_result
+
+    cur2 = conn.cursor()
+    cur2.execute(query2)
+    performer = cur2.fetchone()
+    cur2.close()
+
+    return title, performer
