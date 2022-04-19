@@ -1,4 +1,5 @@
 from telebot import types, TeleBot
+from time import sleep
 from config import BOT_TOKEN, BOT_USERNAME, SUDO
 from db import Add_new_song, Search_In_All_Songs, Count_songs, Get_music_name
 from utils import Get_users_count, Write_userID, is_user, Get_total_users, Get_lyrics
@@ -233,4 +234,9 @@ def Stat_handler(message):
 
 
 print('[+] Robot started successfully !')
-bot.polling(none_stop=True)
+while True:
+    try:
+        bot.polling(none_stop=True)
+    except Exception as err:
+        with open('err.txt', 'w') as file:
+            file.write(err)
